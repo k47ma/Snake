@@ -1,10 +1,14 @@
+import sun.plugin.services.WIExplorerBrowserService;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 
 
-public class Game extends JFrame {
+public class Game extends JComponent implements KeyListener {
     private JFrame mainFrame;
     private JPanel gridContainer;
     private JPanel[] grid;
@@ -13,10 +17,46 @@ public class Game extends JFrame {
     private int HEIGHT = 20;
     
     private int S_LENGTH;
-    private String S_DIRECTION;
+    private Direction S_DIRECTION;
+
     private Point[] SNAKE;
 
     private int DELAY = 100;
+
+    @Override
+    public void keyTyped(KeyEvent e) {
+
+    }
+
+    @Override
+    public void keyPressed(KeyEvent e) {
+        int key = e.getKeyCode();
+        switch (key) {
+            case KeyEvent.VK_RIGHT:
+                S_DIRECTION = Direction.RIGHT;
+                break;
+            case KeyEvent.VK_LEFT:
+                S_DIRECTION = Direction.LEFT;
+                break;
+            case KeyEvent.VK_UP:
+                S_DIRECTION = Direction.UP;
+                break;
+            case KeyEvent.VK_DOWN:
+                S_DIRECTION = Direction.DOWN;
+                break;
+            default:
+                break;
+        }
+    }
+
+    @Override
+    public void keyReleased(KeyEvent e) {
+
+    }
+
+    private enum Direction {
+        RIGHT, LEFT, UP, DOWN
+    }
 
     private Game() {
         setUpGame();
@@ -44,13 +84,15 @@ public class Game extends JFrame {
 
         mainFrame.add(gridContainer);
         mainFrame.setSize(1000, 1000);
+        mainFrame.setFocusable(true);
         mainFrame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        mainFrame.addKeyListener(this);
         mainFrame.setVisible(true);
     }
 
     private void startGame() {
         S_LENGTH = 3;
-        S_DIRECTION = "right";
+        S_DIRECTION = Direction.RIGHT;
         SNAKE = new Point[WIDTH * HEIGHT];
         
         for (int i = 0; i < WIDTH * HEIGHT; ++i) {
@@ -79,11 +121,43 @@ public class Game extends JFrame {
     }
 
     private void moveSnake() {
+        int prev_x = SNAKE[0].x;
+        int prev_y = SNAKE[0].y;
         for (int i = 0; i < S_LENGTH; ++i) {
-            SNAKE[i].x += 1;
-
-            if (SNAKE[i].x > WIDTH) {
-                SNAKE[i].x = 1;
+            if (i == 0) {
+                switch (S_DIRECTION) {
+                    case RIGHT:
+                        ++SNAKE[i].x;
+                        if (SNAKE[i].x > WIDTH) {
+                            SNAKE[i].x = 1;
+                        }
+                        break;
+                    case LEFT:
+                        --SNAKE[i].x;
+                        if (SNAKE[i].x < 1) {
+                            SNAKE[i].x = WIDTH;
+                        }
+                        break;
+                    case UP:
+                        --SNAKE[i].y;
+                        if (SNAKE[i].y < 1) {
+                            SNAKE[i].y = HEIGHT;
+                        }
+                        break;
+                    case DOWN:
+                        ++SNAKE[i].y;
+                        if (SNAKE[i].y > HEIGHT) {
+                            SNAKE[i].y = 1;
+                        }
+                        break;
+                }
+            } else {
+                int temp_x = SNAKE[i].x;
+                int temp_y = SNAKE[i].y;
+                SNAKE[i].x = prev_x;
+                SNAKE[i].y = prev_y;
+                prev_x = temp_x;
+                prev_y = temp_y;
             }
         }
     }
