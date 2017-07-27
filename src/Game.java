@@ -1,6 +1,4 @@
 import javax.swing.*;
-import javax.swing.text.Position;
-import java.applet.Applet;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -101,7 +99,7 @@ public class Game extends JComponent implements KeyListener {
         SNAKE = new Point[WIDTH * HEIGHT];
 
         // add panels to grid
-        gridContainer.setLayout(new GridLayout(WIDTH, HEIGHT, 3, 3));
+        gridContainer.setLayout(new GridLayout(HEIGHT, WIDTH, 3, 3));
         for (int i = 0; i < WIDTH * HEIGHT; ++i) {
             JPanel panel = new JPanel();
             panel.setBackground(Color.white);
@@ -126,12 +124,12 @@ public class Game extends JComponent implements KeyListener {
             SNAKE[i] = new Point(-1, -1);
         }
 
-        SNAKE[0].x = 11;
-        SNAKE[0].y = 10;
-        SNAKE[1].x = 10;
-        SNAKE[1].y = 10;
-        SNAKE[2].x = 9;
-        SNAKE[2].y = 10;
+        SNAKE[0].x = WIDTH / 2 + 1;
+        SNAKE[0].y = HEIGHT / 2;
+        SNAKE[1].x = WIDTH / 2;
+        SNAKE[1].y = HEIGHT / 2;
+        SNAKE[2].x = WIDTH / 2 - 1;
+        SNAKE[2].y = HEIGHT / 2;
 
         putApple();
         drawSnake();
