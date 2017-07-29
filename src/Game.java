@@ -7,9 +7,45 @@ import java.awt.event.KeyListener;
 import java.util.concurrent.ThreadLocalRandom;
 
 
-public class Game extends JComponent implements KeyListener {
+public class Game {
     private JFrame mainFrame;
-    private JPanel gridContainer;
+    private JPanel contentPanel;
+    private BoardPanel gamePanel;
+
+    public static void main (String [] args) {
+        Game game = new Game();
+        game.startGame();
+    }
+
+    public Game() {
+        setUpGame();
+    }
+
+    private void setUpGame() {
+        mainFrame = new JFrame("Snake");
+        contentPanel = new JPanel();
+        gamePanel = new BoardPanel();
+
+        contentPanel.setBorder(
+                BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        contentPanel.setLayout(new CardLayout());
+        contentPanel.add(gamePanel);
+
+        mainFrame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        mainFrame.setContentPane(contentPanel);
+        mainFrame.pack();
+        mainFrame.setSize(1000,1000);
+        mainFrame.setLocationByPlatform(true);
+        mainFrame.setVisible(true);
+    }
+
+    private void startGame () {
+        gamePanel.startGame();
+    }
+}
+
+
+class BoardPanel extends JPanel implements KeyListener {
     private JPanel[] grid;
     
     private int WIDTH = 20;
@@ -49,29 +85,30 @@ public class Game extends JComponent implements KeyListener {
             case KeyEvent.VK_RIGHT:
                 if (S_DIRECTION != Direction.LEFT) {
                     S_DIRECTION = Direction.RIGHT;
+                    CHANGE_DIRECTION = true;
                 }
                 break;
             case KeyEvent.VK_LEFT:
                 if (S_DIRECTION != Direction.RIGHT) {
                     S_DIRECTION = Direction.LEFT;
+                    CHANGE_DIRECTION = true;
                 }
                 break;
             case KeyEvent.VK_UP:
                 if (S_DIRECTION != Direction.DOWN) {
                     S_DIRECTION = Direction.UP;
+                    CHANGE_DIRECTION = true;
                 }
                 break;
             case KeyEvent.VK_DOWN:
                 if (S_DIRECTION != Direction.UP) {
                     S_DIRECTION = Direction.DOWN;
+                    CHANGE_DIRECTION = true;
                 }
                 break;
             default:
                 break;
         }
-
-        // set the flag so it will not change direction twice in the same delay interval
-        CHANGE_DIRECTION = true;
     }
 
     @Override
@@ -83,39 +120,30 @@ public class Game extends JComponent implements KeyListener {
         RIGHT, LEFT, UP, DOWN
     }
 
-    private Game() {
-        setUpGame();
+    public BoardPanel() {
+        setUpBoard();
+        setFocusable(true);
+        setOpaque(true);
     }
 
-    public static void main(String [] args) {
-        Game game = new Game();
-        game.startGame();
-    }
-
-    private void setUpGame() {
-        mainFrame = new JFrame("Snake");
-        gridContainer = new JPanel();
+    private void setUpBoard() {
         grid = new JPanel[WIDTH * HEIGHT];
         SNAKE = new Point[WIDTH * HEIGHT];
 
         // add panels to grid
-        gridContainer.setLayout(new GridLayout(HEIGHT, WIDTH, 3, 3));
+        setLayout(new GridLayout(HEIGHT, WIDTH, 3, 3));
         for (int i = 0; i < WIDTH * HEIGHT; ++i) {
             JPanel panel = new JPanel();
             panel.setBackground(Color.white);
-            gridContainer.add(panel);
+            add(panel);
             grid[i] = panel;
         }
 
-        mainFrame.add(gridContainer);
-        mainFrame.setSize(1000, 1000);
-        mainFrame.setFocusable(true);
-        mainFrame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        mainFrame.addKeyListener(this);
-        mainFrame.setVisible(true);
+        addKeyListener(this);
+
     }
 
-    private void startGame() {
+    public void startGame() {
         S_LENGTH = 3;
         S_DIRECTION = Direction.RIGHT;
         SNAKE = new Point[WIDTH * HEIGHT];
