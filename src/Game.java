@@ -1,56 +1,54 @@
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
+import java.awt.event.*;
 import java.util.concurrent.ThreadLocalRandom;
 
 
 public class Game {
     private JFrame mainFrame;
     private JPanel contentPanel;
+    private StartPage startPanel;
     private BoardPanel gamePanel;
 
-    public static void main (String [] args) {
+    public static void main(String[] args) {
         Game game = new Game();
-        game.startGame();
     }
 
-    public Game() {
+    private Game() {
         setUpGame();
     }
 
     private void setUpGame() {
         mainFrame = new JFrame("Snake");
         contentPanel = new JPanel();
-        gamePanel = new BoardPanel();
+        startPanel = new StartPage(contentPanel);
+        gamePanel = new BoardPanel(contentPanel);
 
         contentPanel.setBorder(
                 BorderFactory.createEmptyBorder(5, 5, 5, 5));
         contentPanel.setLayout(new CardLayout());
-        contentPanel.add(gamePanel);
+        contentPanel.add(startPanel, "start");
+        contentPanel.add(gamePanel, "game");
 
-        mainFrame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         mainFrame.setContentPane(contentPanel);
         mainFrame.pack();
-        mainFrame.setSize(1000,1000);
+        mainFrame.setPreferredSize(new Dimension(1000, 1000));
+        mainFrame.setSize(1000, 1000);
         mainFrame.setLocationByPlatform(true);
         mainFrame.setVisible(true);
-    }
-
-    private void startGame () {
-        gamePanel.startGame();
     }
 }
 
 
 class BoardPanel extends JPanel implements KeyListener {
+    private JPanel contentPanel;
     private JPanel[] grid;
-    
+    private boolean start = false;
+
     private int WIDTH = 20;
     private int HEIGHT = 20;
-    
+
     private int S_LENGTH;
     private Direction S_DIRECTION;
     private boolean CHANGE_DIRECTION = false;
@@ -73,6 +71,11 @@ class BoardPanel extends JPanel implements KeyListener {
 
     @Override
     public void keyPressed(KeyEvent e) {
+        if (!start) {
+            startGame();
+            start = true;
+        }
+
         // if the player has already changed direction in the same delay interval,
         //   then ignore the command
         if (CHANGE_DIRECTION) {
@@ -120,7 +123,15 @@ class BoardPanel extends JPanel implements KeyListener {
         RIGHT, LEFT, UP, DOWN
     }
 
-    public BoardPanel() {
+    public BoardPanel(JPanel panel) {
+        contentPanel = panel;
+        addKeyListener(this);
+        addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentShown(ComponentEvent e) {
+                BoardPanel.this.requestFocus();
+            }
+        });
         setUpBoard();
         setFocusable(true);
         setOpaque(true);
@@ -139,15 +150,10 @@ class BoardPanel extends JPanel implements KeyListener {
             grid[i] = panel;
         }
 
-        addKeyListener(this);
-
-    }
-
-    public void startGame() {
         S_LENGTH = 3;
         S_DIRECTION = Direction.RIGHT;
         SNAKE = new Point[WIDTH * HEIGHT];
-        
+
         for (int i = 0; i < WIDTH * HEIGHT; ++i) {
             SNAKE[i] = new Point(-1, -1);
         }
@@ -161,7 +167,9 @@ class BoardPanel extends JPanel implements KeyListener {
 
         putApple();
         drawSnake();
+    }
 
+    public void startGame() {
         Timer timer = new Timer(DELAY, null);
         timer.addActionListener(new ActionListener() {
             @Override
@@ -288,11 +296,11 @@ class BoardPanel extends JPanel implements KeyListener {
         grid[ind].setBackground(Color.red);
     }
 
-    private int xyToInd (int x, int y) {
+    private int xyToInd(int x, int y) {
         return (y - 1) * WIDTH + x - 1;
     }
 
-    private Point indToxy (int ind) {
+    private Point indToxy(int ind) {
         Point p = new Point();
 
         p.x = (ind + 1) % WIDTH;
@@ -302,5 +310,43 @@ class BoardPanel extends JPanel implements KeyListener {
 
         p.y = (ind + 1) / HEIGHT + 1;
         return p;
+    }
+}
+
+class StartPage extends JPanel {
+    private JPanel contentPanel;
+    private JButton startButton;
+    private JButton exitButton;
+
+    public StartPage(JPanel panel) {
+        setLayout(null);
+        setOpaque(true);
+        contentPanel = panel;
+        startButton = new JButton("Start");
+        exitButton = new JButton("Quit");
+
+        startButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                CardLayout cardLayout = (CardLayout) contentPanel.getLayout();
+                cardLayout.show(contentPanel, "game");
+            }
+        });
+
+        exitButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                System.exit(0);
+            }
+        });
+
+        startButton.setBounds(300, 400, 150, 80);
+        exitButton.setBounds(500, 400, 150, 80);
+
+        startButton.setFont(new Font("Times", Font.BOLD, 35));
+        exitButton.setFont(new Font("Times", Font.BOLD, 35));
+
+        add(startButton);
+        add(exitButton);
     }
 }
