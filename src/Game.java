@@ -89,6 +89,7 @@ class BoardPanel extends JPanel implements KeyListener {
         addComponentListener(new ComponentAdapter() {
             @Override
             public void componentShown(ComponentEvent e) {
+                setUpBoard();
                 BoardPanel.this.requestFocus();
             }
         });
@@ -160,6 +161,7 @@ class BoardPanel extends JPanel implements KeyListener {
 
         for (int i = 0; i < WIDTH * HEIGHT; ++i) {
             SNAKE[i] = new Point(-1, -1);
+            grid[i].setBackground(Color.white);
         }
 
         SNAKE[0].x = WIDTH / 2 + 1;
