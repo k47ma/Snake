@@ -5,10 +5,6 @@ import java.util.concurrent.ThreadLocalRandom;
 
 
 public class Game {
-    private JFrame mainFrame;
-    private JPanel contentPanel;
-    private StartPage startPanel;
-    private BoardPanel gamePanel;
 
     public static void main(String[] args) {
         Game game = new Game();
@@ -19,16 +15,23 @@ public class Game {
     }
 
     private void setUpGame() {
-        mainFrame = new JFrame("Snake");
-        contentPanel = new JPanel();
-        startPanel = new StartPage(contentPanel);
-        gamePanel = new BoardPanel(contentPanel);
+        JFrame mainFrame = new JFrame("Snake");
+        JPanel contentPanel = new JPanel();
+        StartPanel startPanel = new StartPanel(contentPanel);
+        BoardPanel gamePanel = new BoardPanel(contentPanel);
+        EndPanel winPanel = new EndPanel(contentPanel, "You win!");
+        EndPanel losePanel = new EndPanel(contentPanel, "Game over!");
 
         contentPanel.setBorder(
                 BorderFactory.createEmptyBorder(5, 5, 5, 5));
-        contentPanel.setLayout(new CardLayout());
+        CardLayout cardLayout = new CardLayout();
+        contentPanel.setLayout(cardLayout);
         contentPanel.add(startPanel, "start");
         contentPanel.add(gamePanel, "game");
+        contentPanel.add(winPanel, "win");
+        contentPanel.add(losePanel, "lose");
+
+        cardLayout.show(contentPanel, "start");
 
         mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         mainFrame.setContentPane(contentPanel);
@@ -43,11 +46,12 @@ public class Game {
 
 class BoardPanel extends JPanel implements KeyListener {
     private JPanel contentPanel;
-    private JPanel[] grid;
-    private boolean start = false;
 
     private int WIDTH = 20;
     private int HEIGHT = 20;
+
+    private JPanel[] grid;
+    private boolean start = false;
 
     private int S_LENGTH;
     private Direction S_DIRECTION;
@@ -63,6 +67,32 @@ class BoardPanel extends JPanel implements KeyListener {
     private int GAME_WIN = 1;
     private int GAME_OVER = -1;
     private int EAT_APPLE = 2;
+
+    public BoardPanel(JPanel panel) {
+        grid = new JPanel[WIDTH * HEIGHT];
+        SNAKE = new Point[WIDTH * HEIGHT];
+        contentPanel = panel;
+
+        setLayout(new GridLayout(HEIGHT, WIDTH, 3, 3));
+        for (int i = 0; i < WIDTH * HEIGHT; ++i) {
+            JPanel p = new JPanel();
+            p.setBackground(Color.white);
+            add(p);
+            grid[i] = p;
+        }
+
+        setUpBoard();
+        setFocusable(true);
+        setOpaque(true);
+        addKeyListener(this);
+
+        addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentShown(ComponentEvent e) {
+                BoardPanel.this.requestFocus();
+            }
+        });
+    }
 
     @Override
     public void keyTyped(KeyEvent e) {
@@ -123,33 +153,7 @@ class BoardPanel extends JPanel implements KeyListener {
         RIGHT, LEFT, UP, DOWN
     }
 
-    public BoardPanel(JPanel panel) {
-        contentPanel = panel;
-        addKeyListener(this);
-        addComponentListener(new ComponentAdapter() {
-            @Override
-            public void componentShown(ComponentEvent e) {
-                BoardPanel.this.requestFocus();
-            }
-        });
-        setUpBoard();
-        setFocusable(true);
-        setOpaque(true);
-    }
-
     private void setUpBoard() {
-        grid = new JPanel[WIDTH * HEIGHT];
-        SNAKE = new Point[WIDTH * HEIGHT];
-
-        // add panels to grid
-        setLayout(new GridLayout(HEIGHT, WIDTH, 3, 3));
-        for (int i = 0; i < WIDTH * HEIGHT; ++i) {
-            JPanel panel = new JPanel();
-            panel.setBackground(Color.white);
-            add(panel);
-            grid[i] = panel;
-        }
-
         S_LENGTH = 3;
         S_DIRECTION = Direction.RIGHT;
         SNAKE = new Point[WIDTH * HEIGHT];
@@ -181,10 +185,12 @@ class BoardPanel extends JPanel implements KeyListener {
                     ++S_LENGTH;
                 } else if (status == GAME_OVER) {
                     timer.stop();
-                    System.out.println("Game over!");
+                    start = false;
+                    showEndMessage("lose");
                 } else if (status == GAME_WIN) {
                     timer.stop();
-                    System.out.println("You win!");
+                    start = false;
+                    showEndMessage("win");
                 }
                 CHANGE_DIRECTION = false;
             }
@@ -276,22 +282,22 @@ class BoardPanel extends JPanel implements KeyListener {
     private void putApple() {
         ThreadLocalRandom random = ThreadLocalRandom.current();
         boolean spotAvailable = false;
-        int ind = 0;
-        Point pos = new Point();
+        int ind;
+        Point pos;
 
+        ind = random.nextInt(0, WIDTH * HEIGHT - S_LENGTH);
+        pos = indToxy(ind);
         while (!spotAvailable) {
-            ind = random.nextInt(0, WIDTH * HEIGHT);
-            pos = indToxy(ind);
             for (int i = 0; i < S_LENGTH; ++i) {
                 // if the random point is within the snake, then regenerate an apple
                 if (SNAKE[i].equals(pos)) {
+                    ++ind;
                     break;
                 }
-                if (i == S_LENGTH - 1) {
-                    spotAvailable = true;
-                }
+                spotAvailable = true;
             }
         }
+
         APPLE = pos;
         grid[ind].setBackground(Color.red);
     }
@@ -311,14 +317,20 @@ class BoardPanel extends JPanel implements KeyListener {
         p.y = (ind + 1) / HEIGHT + 1;
         return p;
     }
+
+    private void showEndMessage(String type) {
+        CardLayout cardLayout = (CardLayout) contentPanel.getLayout();
+        cardLayout.show(contentPanel, type);
+    }
+
 }
 
-class StartPage extends JPanel {
+class StartPanel extends JPanel {
     private JPanel contentPanel;
     private JButton startButton;
     private JButton exitButton;
 
-    public StartPage(JPanel panel) {
+    public StartPanel(JPanel panel) {
         setLayout(null);
         setOpaque(true);
         contentPanel = panel;
@@ -348,5 +360,56 @@ class StartPage extends JPanel {
 
         add(startButton);
         add(exitButton);
+    }
+}
+
+class EndPanel extends JPanel {
+    public EndPanel(JPanel panel, String msg) {
+        setLayout(new GridLayout(4, 1));
+        setBackground(new Color(1f, 1f, 1f, 0.5f));
+
+        JPanel messagePanel = new JPanel();
+        messagePanel.setLayout(new FlowLayout());
+        messagePanel.setBackground(new Color(1f,1f,1f,0f));
+
+        JLabel label = new JLabel(msg);
+        label.setFont(new Font("Times", Font.BOLD, 50));
+        messagePanel.add(label);
+
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.setLayout(new FlowLayout());
+        buttonPanel.setBackground(new Color(1f, 1f, 1f, 0f));
+
+        JButton restart = new JButton("Restart");
+        restart.setFont(new Font("Times", Font.BOLD, 45));
+        restart.setSize(200, 80);
+        buttonPanel.add(restart);
+
+        JButton quit = new JButton("Quit");
+        quit.setFont(new Font("Times", Font.BOLD, 45));
+        quit.setSize(200, 80);
+        buttonPanel.add(quit);
+
+        JPanel empty = new JPanel();
+        empty.setOpaque(false);
+
+        add(empty);
+        add(messagePanel);
+        add(buttonPanel);
+
+        restart.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                CardLayout cardLayout = (CardLayout) panel.getLayout();
+                cardLayout.show(panel, "game");
+            }
+        });
+
+        quit.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                System.exit(0);
+            }
+        });
     }
 }
