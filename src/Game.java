@@ -313,12 +313,12 @@ class BoardPanel extends JPanel implements KeyListener {
     private void putApple() {
         ThreadLocalRandom random = ThreadLocalRandom.current();
         boolean spotAvailable = false;
-        int ind;
-        Point pos;
+        int ind = -1;
+        Point pos = new Point(-1, -1);
 
-        ind = random.nextInt(0, WIDTH * HEIGHT - S_LENGTH);
-        pos = indToxy(ind);
         while (!spotAvailable) {
+            ind = random.nextInt(0, WIDTH * HEIGHT - S_LENGTH);
+            pos = indToxy(ind);
             for (int i = 0; i < S_LENGTH; ++i) {
                 // if the random point is within the snake, then regenerate an apple
                 if (SNAKE[i].equals(pos)) {
