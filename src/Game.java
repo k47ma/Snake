@@ -1,4 +1,5 @@
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.concurrent.ThreadLocalRandom;
@@ -35,9 +36,8 @@ public class Game {
 
         mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         mainFrame.setContentPane(contentPanel);
+        mainFrame.setPreferredSize(new Dimension(1000, 1200));
         mainFrame.pack();
-        mainFrame.setPreferredSize(new Dimension(1000, 1000));
-        mainFrame.setSize(1000, 1000);
         mainFrame.setLocationByPlatform(true);
         mainFrame.setVisible(true);
     }
@@ -46,6 +46,8 @@ public class Game {
 
 class BoardPanel extends JPanel implements KeyListener {
     private JPanel contentPanel;
+    private JPanel board;
+    private TimerPanel timerPanel;
 
     private int WIDTH = 20;
     private int HEIGHT = 20;
@@ -69,18 +71,26 @@ class BoardPanel extends JPanel implements KeyListener {
     private int EAT_APPLE = 2;
 
     public BoardPanel(JPanel panel) {
+        board = new JPanel();
+        timerPanel = new TimerPanel();
+
         grid = new JPanel[WIDTH * HEIGHT];
         SNAKE = new Point[WIDTH * HEIGHT];
         contentPanel = panel;
 
-        setLayout(new GridLayout(HEIGHT, WIDTH, 3, 3));
+        timerPanel.setPreferredSize(new Dimension(1000, 100));
+
+        board.setLayout(new GridLayout(HEIGHT, WIDTH, 3, 3));
+        board.setPreferredSize(new Dimension(1000,1000));
         for (int i = 0; i < WIDTH * HEIGHT; ++i) {
             JPanel p = new JPanel();
+            p.setPreferredSize(new Dimension(50,50));
             p.setBackground(Color.white);
-            add(p);
+            board.add(p);
             grid[i] = p;
         }
 
+        setLayout(new BorderLayout());
         setUpBoard();
         setFocusable(true);
         setOpaque(true);
@@ -93,6 +103,9 @@ class BoardPanel extends JPanel implements KeyListener {
                 BoardPanel.this.requestFocus();
             }
         });
+
+        add(timerPanel, BorderLayout.NORTH);
+        add(board, BorderLayout.SOUTH);
     }
 
     @Override
@@ -155,6 +168,7 @@ class BoardPanel extends JPanel implements KeyListener {
     }
 
     private void setUpBoard() {
+        timerPanel.clearAll();
         S_LENGTH = 3;
         S_DIRECTION = Direction.RIGHT;
         SNAKE = new Point[WIDTH * HEIGHT];
@@ -176,6 +190,14 @@ class BoardPanel extends JPanel implements KeyListener {
     }
 
     public void startGame() {
+        Timer timing = new Timer(1000, null);
+        timing.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                timerPanel.addTime();
+            }
+        });
+
         Timer timer = new Timer(DELAY, null);
         timer.addActionListener(new ActionListener() {
             @Override
@@ -183,20 +205,27 @@ class BoardPanel extends JPanel implements KeyListener {
                 moveSnake();
                 int status = checkStatus();
                 if (status == EAT_APPLE) {
+                    timerPanel.addPoint();
                     putApple();
                     ++S_LENGTH;
                 } else if (status == GAME_OVER) {
                     timer.stop();
+                    timing.stop();
                     start = false;
                     showEndMessage("lose");
                 } else if (status == GAME_WIN) {
                     timer.stop();
+                    timing.stop();
                     start = false;
                     showEndMessage("win");
                 }
                 CHANGE_DIRECTION = false;
             }
         });
+
+        timing.setRepeats(true);
+        timing.start();
+
         timer.setRepeats(true);
         timer.start();
     }
@@ -413,5 +442,64 @@ class EndPanel extends JPanel {
                 System.exit(0);
             }
         });
+    }
+}
+
+
+class TimerPanel extends JPanel {
+    private int hour, min, sec, points;
+    private JLabel label1, label2, label3, label4;
+
+    public TimerPanel() {
+        setLayout(new FlowLayout());
+
+        label1 = new JLabel("Time: ");
+        label2 = new JLabel("00:00:00");
+        label3 = new JLabel("Points: ");
+        label4 = new JLabel("0");
+
+        label1.setFont(new Font("times", Font.BOLD, 35));
+        label2.setFont(new Font("times", Font.PLAIN, 35));
+        label3.setFont(new Font("times", Font.BOLD, 35));
+        label4.setFont(new Font("times", Font.PLAIN, 35));
+
+        label1.setBorder(new EmptyBorder(20,10,20,10));
+        label2.setBorder(new EmptyBorder(20, 10,20, 50));
+        label3.setBorder(new EmptyBorder(20,10,20,10));
+        label4.setBorder(new EmptyBorder(20,10,20,50));
+
+        add(label1);
+        add(label2);
+        add(label3);
+        add(label4);
+    }
+
+    public void addTime() {
+        ++sec;
+        if (sec == 60) {
+            sec = 0;
+            ++min;
+        }
+        if (min == 60) {
+            min = 0;
+            ++hour;
+        }
+
+        label2.setText(String.format("%02d:%02d:%02d", hour, min, sec));
+    }
+
+    public void addPoint() {
+        ++points;
+        label4.setText(Integer.toString(points));
+    }
+
+    public void clearAll() {
+        hour = 0;
+        min = 0;
+        sec = 0;
+        points = 0;
+
+        label2.setText("00:00:00");
+        label4.setText("0");
     }
 }
